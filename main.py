@@ -6,7 +6,8 @@ from pipelines.hidden_nulls import (
     detect_hidden_nulls,
     replace_hidden_nulls,
     replace_nulls_in_numeric_columns,
-    winsortize_outliers_in_columns, standardize_numeric_columns,
+    winsortize_outliers_in_columns,
+    standardize_numeric_columns,
 )
 
 pd.set_option("display.max_columns", None)
@@ -17,7 +18,7 @@ if __name__ == "__main__":
     # detect_hidden_nulls(data, data.columns)
     train_data = drop_columns(train_data, ["euribor3m", "emp.var.rate"])
     train_data_without_hidden_nulls = replace_hidden_nulls(
-        train_data, train_data.columns, custom_values={"pdays": [999]}
+        train_data, train_data.columns.tolist(), custom_values={"pdays": [999]}
     )
     train_data_without_nulls = replace_nulls_in_numeric_columns(train_data)
 

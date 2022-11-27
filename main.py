@@ -2,10 +2,12 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from pipelines.generic import drop_columns
-from pipelines.hidden_nulls import (
+from pipelines.nulls_processing import (
     detect_hidden_nulls,
     replace_hidden_nulls,
     replace_nulls_in_numeric_columns,
+)
+from pipelines.numeric_features import (
     winsortize_outliers_in_columns,
     standardize_numeric_columns,
 )

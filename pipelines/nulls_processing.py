@@ -2,11 +2,10 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+from pandas import DataFrame
 from sklearn.impute import KNNImputer, SimpleImputer
 
 from utils import NULL_EQUIVALENTS
-
-NULL_EQUIVALENTS = NULL_EQUIVALENTS + [0]
 
 
 def detect_hidden_nulls(data: pd.DataFrame, columns: list[str]) -> None:
@@ -15,7 +14,7 @@ def detect_hidden_nulls(data: pd.DataFrame, columns: list[str]) -> None:
     for column in columns:
         print(f"\nColumn: {column}")
 
-        for value in NULL_EQUIVALENTS:
+        for value in NULL_EQUIVALENTS + [0]:
             if (number_of_occurrences := data[data[column] == value].shape[0]) > 0:
                 print(
                     f"Found {number_of_occurrences} [{round(number_of_occurrences * 100 / data.shape[0], 2)}%] of {value}"
@@ -50,39 +49,15 @@ def replace_hidden_nulls(
 
 def replace_nulls_in_numeric_columns(
     data: pd.DataFrame,
-    strategies: dict[str, str] = None,
-    fill_values: dict[str, str] = None,
-    **kwargs,
-) -> pd.DataFrame:
-    """
-    :param data:
-    :param strategies: Dictionary with one of the following strategies: "mean", "median", "most_frequent", "constant"]
-    :param fill_values: Dictionary with replacement values for "constant" strategy
-    :param kwargs: arguments for Imputer
-    """
-    numeric_columns = data.select_dtypes(include=[np.number]).columns.values
-
-    for column in numeric_columns:
-        imputer_kwargs = {}
-        if strategies and column in strategies:
-            imputer_kwargs["strategy"] = strategies[column]
-        if fill_values and column in fill_values:
-            imputer_kwargs["fill_value"] = fill_values[column]
-
-        data = replace_nulls_in_numeric_column(data, column, **imputer_kwargs, **kwargs)
-
-    return data
-
-
-def replace_nulls_in_numeric_column(
-    data: pd.DataFrame,
-    column: str,
+    test_data: pd.DataFrame,
+    columns: list[str],
     strategy: str = "constant",
     **kwargs,
-) -> pd.DataFrame:
+) -> tuple[DataFrame, DataFrame]:
     """
     :param data:
-    :param column: Column name
+    :param test_data:
+    :param columns: Column names in which to replace nulls
     :param strategy: one of ["constant", "mean", "median", "KNN"]
     :param kwargs: arguments for Imputer
     """
@@ -99,6 +74,34 @@ def replace_nulls_in_numeric_column(
     else:
         raise ValueError("Invalid strategy")
 
-    data[column] = imputer.fit_transform(data[[column]])
+    data[columns] = imputer.fit_transform(data[columns])
+    test_data[columns] = imputer.transform(test_data[columns])
 
-    return data
+    return data, test_data
+
+
+def replace_nulls_in_categorical_columns(
+    data: pd.DataFrame,
+    test_data: pd.DataFrame,
+    columns: list[str],
+    strategy: str = "most_frequent",
+    constant: Optional[str] = None,
+) -> tuple[DataFrame, DataFrame]:
+    """
+    :param data:
+    :param test_data:
+    :param columns: Column names in which to replace nulls
+    :param strategy: one of ["constant", "most_frequent"]
+    :param constant: value to replace nulls with
+    """
+    if strategy == "most_frequent":
+        for column in columns:
+            most_frequent_value = data[column].mode()[0]
+
+            data[column] = data[column].fillna(most_frequent_value)
+            test_data[column] = test_data[column].fillna(most_frequent_value)
+    elif strategy == "constant":
+        data[columns] = data[columns].fillna(constant)
+        test_data[columns] = test_data[columns].fillna(constant)
+
+    return data, test_data

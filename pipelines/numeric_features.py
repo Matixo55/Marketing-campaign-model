@@ -1,22 +1,28 @@
 from feature_engine.outliers import Winsorizer, OutlierTrimmer
 import pandas as pd
+from pandas import DataFrame
 from sklearn.preprocessing import StandardScaler
-import numpy as np
 
 
 def winsortize_outliers_in_columns(
-    data: pd.DataFrame, columns: list[str], capping_method: str = "iqr", **kwargs
-) -> pd.DataFrame:
+    data: pd.DataFrame,
+    test_data: pd.DataFrame,
+    columns: list[str],
+    capping_method: str = "iqr",
+    **kwargs,
+) -> tuple[DataFrame, DataFrame]:
     """
     :param data:
+    :param test_data:
     :param columns: columns to winsortize
     :param capping_method: one of ["gaussian", "iqr", "quantiles", "mad"]
     :param kwargs: arguments for Winsorizer
     """
     winsortizer = Winsorizer(capping_method=capping_method, **kwargs)
     data[columns] = winsortizer.fit_transform(data[columns])
+    test_data[columns] = winsortizer.transform(test_data[columns])
 
-    return data
+    return data, test_data
 
 
 def drop_columns_with_outliers(
@@ -40,14 +46,16 @@ def drop_columns_with_outliers(
     return data
 
 
-def standardize_numeric_columns(data: pd.DataFrame, **kwargs) -> pd.DataFrame:
+def standardize_numeric_columns(
+    data: pd.DataFrame, test_data: pd.DataFrame, columns: list[str], **kwargs
+) -> tuple[DataFrame, DataFrame]:
     """
     :param data:
+    :param test_data:
     :param kwargs: arguments for StandardScaler
     """
-    numeric_columns = data.select_dtypes(include=[np.number]).columns.values
-
     scaler = StandardScaler(**kwargs)
-    data[numeric_columns] = scaler.fit_transform(data[numeric_columns])
+    data[columns] = scaler.fit_transform(data[columns])
+    test_data[columns] = scaler.transform(test_data[columns])
 
-    return data
+    return data, test_data

@@ -31,13 +31,13 @@ def objective(trial):
     classifier_name = trial.suggest_categorical(
         "classifier",
         [
-            "SVC",
-            "KNeighborsClassifier",
-            "LogisticRegression",
-            "GaussianNB",
-            "DecisionTreeClassifier",
-            "RandomForestClassifier",
-            "XGBClassifier",
+            "SVC",  #
+            # "KNeighborsClassifier",
+            # "LogisticRegression",
+            # "GaussianNB",
+            # "DecisionTreeClassifier",
+            # "RandomForestClassifier",
+            # "XGBClassifier",
         ],
     )
 
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     X = data.drop(columns=["y"])
     y = data["y"]
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
 
     # detect_hidden_nulls(data, data.columns)
 
@@ -148,7 +148,6 @@ if __name__ == "__main__":
     X_train, X_test = encode_categorical_columns(
         X_train, X_test, categorical_columns, strategy="onehot"
     )
-
     X_train, X_test = winsortize_outliers_in_columns(
         X_train,
         X_test,

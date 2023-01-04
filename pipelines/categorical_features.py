@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
+from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder
 
 
@@ -22,10 +23,22 @@ def encode_categorical_columns(
     :return:
     """
     if strategy == "onehot":
-        encoder = OneHotEncoder(categories=categories, **kwargs)
+        encoder = OneHotEncoder(sparse=False,**kwargs)
+        encoded_data = encoder.fit_transform(data[columns])
+        encoded_test_data = encoder.transform(test_data[columns])
 
-        data[[columns]] = encoder.fit_transform(data[[columns]])
-        test_data[[columns]] = encoder.transform(test_data[[columns]])
+        encoded_data = pd.DataFrame(encoded_data, columns=encoder.get_feature_names_out())
+        encoded_test_data = pd.DataFrame(encoded_test_data, columns=encoder.get_feature_names_out())
+
+        encoded_data.index = data.index
+        encoded_test_data.index = test_data.index
+
+        data = data.drop(columns, axis=1)
+        test_data = test_data.drop(columns, axis=1)
+
+        data = pd.concat([data, encoded_data], axis=1)
+        test_data = pd.concat([test_data, encoded_test_data], axis=1)
+
     elif strategy == "ordinal":
         encoder = OrdinalEncoder(categories=[categories], **kwargs)
 
